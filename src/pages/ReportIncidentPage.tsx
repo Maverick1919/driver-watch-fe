@@ -32,7 +32,7 @@ const incidentTypesForSelect: IncidentType[] = [
 
 const reportIncidentSchema = z.object({
   driverFirstName: z.string().optional(),
-  driverLastName: z.string().optional(),
+  driverLastName: z.string().min(1, "Driver last name is required"),
   cdlNumber: z.string().min(1, "CDL Number is required"),
   driverEmail: z.string().email("Invalid email address").optional().or(z.literal('')),
   driverPhone: z.string().optional(),
@@ -41,7 +41,7 @@ const reportIncidentSchema = z.object({
   location: z.string().min(1, "Location is required"),
   incidentDescription: z.string().min(1, "Description is required"),
   companyName: z.string().min(1, "Company name is required"),
-  companyPhone: z.string().optional(),
+  companyPhone: z.string().min(1, "Company phone is required"),
   companyEmail: z.string().email("Invalid company email").min(1, "Company email is required"),
 });
 
@@ -64,15 +64,22 @@ const ReportIncidentPage = () => {
     setIsLoading(true);
 
     try {
+      if (!driverIdLicenseFile) {
+        toast({
+          title: "Driver License Required",
+          description: "Please upload the driver's license before submitting the complaint.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const formData = new FormData();
 
       formData.append('DriverFirstName', values.driverFirstName || '');
       formData.append('DriverLastName', values.driverLastName || '');
       formData.append('DriverEmail', values.driverEmail || '');
       formData.append('DriverPhone', values.driverPhone || '');
-      if (driverIdLicenseFile) {
-        formData.append('DriverIdFile', driverIdLicenseFile);
-      }
+      formData.append('DriverIdFile', driverIdLicenseFile);
       formData.append('IncidentType', values.incidentType);
       formData.append('DateOccurred', values.dateOccurred);
       formData.append('Location', values.location);
@@ -139,7 +146,7 @@ const ReportIncidentPage = () => {
                 {errors.driverFirstName && <p className="text-red-500 text-sm mt-1">{errors.driverFirstName.message}</p>}
               </div>
               <div>
-                <Label htmlFor="driverLastName">Driver Last Name</Label>
+                <Label htmlFor="driverLastName">Driver Last Name *</Label>
                 <Input id="driverLastName" type="text" placeholder="Enter driver's last name" {...register("driverLastName")} />
                 {errors.driverLastName && <p className="text-red-500 text-sm mt-1">{errors.driverLastName.message}</p>}
               </div>
@@ -163,7 +170,7 @@ const ReportIncidentPage = () => {
               </div>
             </div>
             <div>
-              <Label htmlFor="driverIdLicense">Driver ID/License (Optional)</Label>
+              <Label htmlFor="driverIdLicense">Driver ID/License *</Label>
               <div className="flex items-center justify-center w-full">
                 <label htmlFor="driverIdLicenseFile" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80 transition-colors">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -180,6 +187,9 @@ const ReportIncidentPage = () => {
                   <Input id="driverIdLicenseFile" type="file" className="hidden" onChange={(e) => setDriverIdLicenseFile(e.target.files ? e.target.files[0] : null)} />
                 </label>
               </div>
+              {!driverIdLicenseFile && (
+                <p className="text-xs text-muted-foreground mt-1">* Driver license upload is required.</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -266,7 +276,7 @@ const ReportIncidentPage = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="companyPhone">Company Phone</Label>
+                <Label htmlFor="companyPhone">Company Phone *</Label>
                 <Input id="companyPhone" type="tel" placeholder="Company phone number" {...register("companyPhone")} />
                 {errors.companyPhone && <p className="text-red-500 text-sm mt-1">{errors.companyPhone.message}</p>}
               </div>

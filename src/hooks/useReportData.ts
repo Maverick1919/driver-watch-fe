@@ -5,8 +5,13 @@ import { useSearchParams } from 'react-router-dom';
 import { ReportListItem, ReportStatus as ReportStatusType, IncidentType } from '@/types';
 import { DriverProfileReportItem, DriverProfileViewData } from '@/components/reports/reportTypes';
 import { useToast } from '@/hooks/use-toast';
-import { getAllReports } from '@/api/driverRegistry';
-import { extractReportsFromResponse, mapReportToListItem } from '@/lib/reportMappers';
+import { getAllReports, getDriverByCdl } from '@/api/driverRegistry';
+import {
+  extractReportsFromResponse,
+  mapDriverLookupResponseToProfile,
+  mapDriverLookupResponseToReports,
+  mapReportToListItem
+} from '@/lib/reportMappers';
 
 const reportStatuses: ReportStatusType[] = ["Pending", "Reviewed", "Approved", "Resolved", "Rejected", "info_requested"];
 
@@ -36,6 +41,7 @@ export const useReportData = () => {
   const initialStatus = initialStatusFromUrl && validStatuses.includes(initialStatusFromUrl as any) ? initialStatusFromUrl as ReportStatusType | "All" : "All";
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<ReportStatusType | "All">(initialStatus);
   const [displayedReports, setDisplayedReports] = useState<ReportListItem[]>([]);
   const [driverProfiles, setDriverProfiles] = useState<DriverProfileViewData[]>([]);
@@ -76,19 +82,19 @@ export const useReportData = () => {
 
   const applyFilters = useCallback(() => {
     let reportsToFilter = allReports;
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
+    if (appliedSearchTerm) {
+      const lowerSearchTerm = appliedSearchTerm.toLowerCase();
       reportsToFilter = reportsToFilter.filter(report =>
         report.driver_name.toLowerCase().includes(lowerSearchTerm) ||
         report.company_name_making_report.toLowerCase().includes(lowerSearchTerm) ||
-        report.cdl_number.toLowerCase().includes(lowerSearchTerm)
+        report.cdl_number.toLowerCase() === lowerSearchTerm
       );
     }
     if (selectedStatus !== "All") {
       reportsToFilter = reportsToFilter.filter(report => report.status === selectedStatus);
     }
     processAndSetReportData(reportsToFilter);
-  }, [allReports, searchTerm, selectedStatus, processAndSetReportData]);
+  }, [allReports, appliedSearchTerm, selectedStatus, processAndSetReportData]);
 
   useEffect(() => {
     if (reportsError) {
@@ -102,10 +108,36 @@ export const useReportData = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [allReports, searchTerm, selectedStatus, applyFilters]);
+  }, [allReports, appliedSearchTerm, selectedStatus, applyFilters]);
   
   const handleSearchButtonClick = () => {
-    applyFilters(); 
+    const trimmedSearchTerm = searchTerm.trim();
+    setAppliedSearchTerm(trimmedSearchTerm);
+
+    if (!trimmedSearchTerm) {
+      processAndSetReportData(
+        selectedStatus === "All"
+          ? allReports
+          : allReports.filter((report) => report.status === selectedStatus)
+      );
+      return;
+    }
+
+    getDriverByCdl(trimmedSearchTerm)
+      .then((response) => {
+        const remoteReports = mapDriverLookupResponseToReports(response.data).filter((report) =>
+          selectedStatus === "All" ? true : report.status === selectedStatus
+        );
+        const remoteProfile = mapDriverLookupResponseToProfile(response.data);
+
+        if (remoteReports.length > 0) {
+          setDisplayedReports(remoteReports);
+          setDriverProfiles(remoteProfile ? [remoteProfile] : []);
+        }
+      })
+      .catch(() => {
+        // Keep existing local search behavior when CDL lookup doesn't match.
+      });
   };
 
   const handleStatusChange = (value: ReportStatusType | "All") => {

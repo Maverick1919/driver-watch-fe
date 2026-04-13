@@ -36,6 +36,9 @@ const ReportSearchFilters: React.FC<ReportSearchFiltersProps> = ({
           <SearchIcon className="mr-2 h-5 w-5 text-primary" />
           Search Reports
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Search by driver name or CDL number.
+        </p>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -43,7 +46,7 @@ const ReportSearchFilters: React.FC<ReportSearchFiltersProps> = ({
             <Input
               id="search-term"
               type="text"
-              placeholder="Search by driver name or company..."
+              placeholder="Search by driver name or CDL number..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full"

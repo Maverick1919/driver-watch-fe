@@ -1,4 +1,5 @@
 import { Report, ReportListItem } from '@/types';
+import { DriverProfileViewData } from '@/components/reports/reportTypes';
 
 const asArray = (value: any): any[] => {
   if (Array.isArray(value)) {
@@ -188,3 +189,65 @@ export const mapApiComplaintToListItem = (item: any): ReportListItem => ({
 
 export const extractComplaintsFromResponse = (payload: any): ReportListItem[] =>
   asArray(payload).map(mapApiComplaintToListItem);
+
+export const mapDriverLookupResponseToReports = (payload: any): ReportListItem[] => {
+  const driver = payload?.driver ?? {};
+  const reports = Array.isArray(payload?.reports) ? payload.reports : [];
+
+  return reports.map((report: any) => ({
+    id: String(report?.reportId ?? ''),
+    created_at: '',
+    driver_name:
+      `${driver?.driverFirstName || ''} ${driver?.driverLastName || ''}`.trim() || 'N/A',
+    driver_first_name: driver?.driverFirstName || null,
+    driver_last_name: driver?.driverLastName || null,
+    cdl_number: driver?.driverCdl || 'N/A',
+    driver_email: driver?.driverEmail || null,
+    driver_phone: driver?.driverPhone || null,
+    incident_type: (report?.incidentType || 'other').replace(/-/g, '_'),
+    date_occurred: report?.dateOccurred || '',
+    location: report?.location || 'N/A',
+    description: report?.description || 'No description provided.',
+    status:
+      report?.status === 'Approved'
+        ? 'Approved'
+        : report?.status === 'Rejected'
+          ? 'Rejected'
+          : report?.status === 'Resolved'
+            ? 'Resolved'
+            : report?.status === 'Reviewed'
+              ? 'Reviewed'
+              : report?.status === 'info_requested'
+                ? 'info_requested'
+                : 'Pending',
+    company_name_making_report: report?.companyName || 'N/A',
+    driver_id_license_url: driver?.driverIdFileUrl || null,
+    incident_proofs_urls: report?.incidentProofUrl ? [report.incidentProofUrl] : null,
+    moderator_notes: null,
+  }));
+};
+
+export const mapDriverLookupResponseToProfile = (payload: any): DriverProfileViewData | null => {
+  const driver = payload?.driver;
+  if (!driver) {
+    return null;
+  }
+
+  const reports = mapDriverLookupResponseToReports(payload);
+
+  return {
+    driver_name:
+      `${driver?.driverFirstName || ''} ${driver?.driverLastName || ''}`.trim() || 'N/A',
+    cdl_number: driver?.driverCdl || 'N/A',
+    phone: driver?.driverPhone || 'Not Available',
+    email: driver?.driverEmail || 'Not Available',
+    report_count: Number(payload?.totalReports ?? reports.length),
+    reports: reports.map((report) => ({
+      id: report.id,
+      incident_type: report.incident_type,
+      description: report.description,
+      location: report.location,
+      date_occurred: report.date_occurred,
+    })),
+  };
+};

@@ -28,6 +28,9 @@ export const getComplaintsCount = () =>
 export const getAllReports = () =>
   API.get("/DriverRegistry/GetAllReports");
 
+export const getDriverByCdl = (cdl: string) =>
+  API.get(`/DriverRegistry/GetDriverByCdl/${encodeURIComponent(cdl)}`);
+
 export const updateStatus = (data: {
   complaintId: number;
   status: string;

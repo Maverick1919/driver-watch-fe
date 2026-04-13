@@ -81,7 +81,7 @@ const AuthPage = () => {
             
             <div className="text-center pt-4 space-y-2">
               <p className="text-sm text-gray-600">
-                Secure login connected to the TruckWatch backend
+                Secure login powered by Supabase
               </p>
               <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
                 <span className="flex items-center space-x-1">

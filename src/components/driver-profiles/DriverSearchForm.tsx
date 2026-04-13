@@ -24,14 +24,14 @@ const DriverSearchForm: React.FC<DriverSearchFormProps> = ({ onSearch, initialTe
                 <CardTitle className="flex items-center text-xl">
                     <Search className="mr-2 h-5 w-5 text-primary" /> Search Driver Profiles
                 </CardTitle>
-                <CardDescription>Enter driver's name, CDL, or associated company to find profiles.</CardDescription>
+                <CardDescription>Enter driver's name or CDL to find profiles.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSearch} className="space-y-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Input
                             type="text"
-                            placeholder="Driver Name, CDL, or Company..."
+                            placeholder="Driver Name or CDL..."
                             className="flex-grow"
                             value={tempSearchTerm}
                             onChange={(e) => setTempSearchTerm(e.target.value)}
